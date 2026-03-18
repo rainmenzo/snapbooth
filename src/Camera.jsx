@@ -1,29 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-useEffect(() => {
-    const handler = (e) => {
-        e.preventDefault();
-        setDeferredPrompt(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handler);
-
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-}, []);
-
-const installApp = async () => {
-    if (!deferredPrompt) return;
-
-    deferredPrompt.prompt();
-    const choice = await deferredPrompt.userChoice;
-
-    if (choice.outcome === 'accepted') {
-        console.log('App installed');
-    }
-
-    setDeferredPrompt(null);
-};
 
 export default function Camera() {
     const videoRef = useRef(null);
@@ -37,6 +12,8 @@ export default function Camera() {
     const [frame, setFrame] = useState("none");
     const [mode, setMode] = useState("setup"); // 👈 NEW
 
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+
     // 🎭 FILTER STYLES
     const filterStyles = {
         none: "none",
@@ -45,6 +22,30 @@ export default function Camera() {
         vintage: "contrast(120%) sepia(40%)",
     };
 
+    // PWA Install Prompt
+    useEffect(() => {
+        const handler = (e) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handler);
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const installApp = async () => {
+        if (!deferredPrompt) return;
+
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+
+        if (choice.outcome === 'accepted') {
+            console.log('App installed');
+        }
+
+        setDeferredPrompt(null);
+    };
+
+    // CAMERA STREAM
     useEffect(() => {
         if (mode === "camera") {
             navigator.mediaDevices.getUserMedia({ video: true })
@@ -55,7 +56,7 @@ export default function Camera() {
         }
     }, [mode]);
 
-    // 📸 TAKE PHOTO
+    // TAKE PHOTO
     const takePhoto = () => {
         const canvas = document.createElement("canvas");
         canvas.width = videoRef.current.videoWidth;
@@ -68,7 +69,7 @@ export default function Camera() {
         return canvas.toDataURL("image/png");
     };
 
-    // ⏱️ COUNTDOWN
+    // COUNTDOWN
     const countdown = (seconds) => {
         return new Promise(resolve => {
             let c = seconds;
@@ -87,8 +88,10 @@ export default function Camera() {
         });
     };
 
-    // 🧾 CREATE STRIP
+    // CREATE STRIP
     const createStrip = async (images) => {
+        if (!images || images.length === 0) return null;
+
         const canvas = document.createElement("canvas");
         const ctx = canvas.getContext("2d");
 
@@ -101,7 +104,6 @@ export default function Camera() {
         for (let i = 0; i < images.length; i++) {
             const img = new Image();
             img.src = images[i];
-
             await new Promise(resolve => (img.onload = resolve));
 
             ctx.drawImage(img, 0, i * height, width, height);
@@ -117,10 +119,10 @@ export default function Camera() {
         return canvas.toDataURL("image/png");
     };
 
-    // 🎞️ FLOW
+    // START PHOTOBOOTH FLOW
     const startBooth = async () => {
         setIsRunning(true);
-        let shots = [];
+        const shots = [];
 
         for (let i = 0; i < 4; i++) {
             await countdown(3);
@@ -128,21 +130,28 @@ export default function Camera() {
         }
 
         setPhotos(shots);
+
         const finalStrip = await createStrip(shots);
         setStrip(finalStrip);
+
         setIsRunning(false);
     };
 
-    // 💾 DOWNLOAD
+    // DOWNLOAD STRIP
     const downloadStrip = () => {
+        if (!strip) return alert("No strip to download yet!");
+
         const link = document.createElement("a");
         link.href = strip;
         link.download = "snapbooth.png";
+        link.target = "_blank"; // ensures safe click in some browsers
+        document.body.appendChild(link);
         link.click();
+        document.body.removeChild(link);
     };
 
     // ======================
-    // 🟣 SETUP SCREEN
+    // SETUP SCREEN
     // ======================
     if (mode === "setup") {
         return (
@@ -155,8 +164,8 @@ export default function Camera() {
                 alignItems: "center",
                 justifyContent: "center"
             }}>
-
                 <h1>📸 SnapBooth</h1>
+
                 {deferredPrompt && (
                     <button
                         onClick={installApp}
@@ -171,6 +180,7 @@ export default function Camera() {
                         Install App
                     </button>
                 )}
+
                 {/* FILTERS */}
                 <h3>Select Filter</h3>
                 <div style={{ display: "flex", gap: "10px" }}>
@@ -216,11 +226,10 @@ export default function Camera() {
     }
 
     // ======================
-    // 🔵 CAMERA SCREEN
+    // CAMERA SCREEN
     // ======================
     return (
         <div style={{ height: "100vh", background: "#000" }}>
-
             <video
                 ref={videoRef}
                 autoPlay
@@ -249,7 +258,7 @@ export default function Camera() {
                 </div>
             )}
 
-            {/* BUTTON */}
+            {/* TAKE PHOTO BUTTON */}
             {!isRunning && (
                 <button
                     onClick={startBooth}
@@ -267,7 +276,7 @@ export default function Camera() {
                 />
             )}
 
-            {/* RESULT */}
+            {/* PHOTO STRIP RESULT */}
             {strip && (
                 <div style={{
                     position: "absolute",
@@ -276,7 +285,7 @@ export default function Camera() {
                     background: "#111",
                     padding: 10
                 }}>
-                    <img src={strip} width="120" />
+                    <img src={strip} width="120" alt="Photo strip" />
                     <br />
                     <button onClick={downloadStrip}>Download</button>
                 </div>
