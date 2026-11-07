@@ -112,7 +112,7 @@ export default function Camera() {
                 if (c > 0) {
                     setCount(c);
                 } else if (c === 0) {
-                    setCount("SMILE! 📸");
+                    setCount("SMILE!");
                 } else {
                     clearInterval(interval);
                     setCount(null);
@@ -230,6 +230,7 @@ export default function Camera() {
         <div
             style={{
                 minHeight: "100vh",
+                width:"100%",
                 background: "radial-gradient(circle at 50% 20%, #1e1b4b 0%, #09090b 80%)",
                 color: "#fff",
                 fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -267,9 +268,7 @@ export default function Camera() {
                         margin: "0 0 8px 0",
                         paddingBottom: "4px",
                         lineHeight: "1.2",
-                        background: "linear-gradient(135deg, #a855f7, #6366f1)",
-                        WebkitBackgroundClip: "text",
-                        WebkitTextFillColor: "transparent",
+                        color: "#a855f7",
                         display: "inline-block",
                     }}
                 >
@@ -278,7 +277,7 @@ export default function Camera() {
                 <p style={{ color: "#a1a1aa", margin: 0, fontSize: "0.95rem" }}>Classic 4-Cut Studio Experience</p>
             </header>
 
-            {/* ======================= SETUP SCREEN ======================= */}
+            {/* SETUP SCREEN */}
             {mode === "setup" && (
                 <div
                     style={{
@@ -356,16 +355,16 @@ export default function Camera() {
                     </div>
 
                     {/* THEME / FRAME SELECTION */}
-                    <div>
+                    <div style={{marginTop:"12px"}}>
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
                             2. Select Course/Department Theme
                         </label>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                             {[
-                                { id: "bsit", label: "BSIT Theme", preview: "/frames/bsit/1.png" },
-                                { id: "cte", label: "CTE Theme", preview: "/frames/cte/1.png" },
-                                { id: "cbam", label: "CBAM Theme", preview: "/frames/cbam/1.png" },
-                                { id: "bsoa", label: "BSOA Theme", preview: "/frames/bsoa/1.png" },
+                                { id: "bsit", label: "BSIT Theme", preview: "/frames/bsit/5.svg" },
+                                { id: "cte", label: "CTE Theme", preview: "/frames/cte/5.svg" },
+                                { id: "cbam", label: "CBAM Theme", preview: "/frames/cbam/5.svg" },
+                                { id: "bsoa", label: "BSOA Theme", preview: "/frames/bsoa/5.svg" },
                             ].map((item) => (
                                 <button
                                     key={item.id}
@@ -407,7 +406,8 @@ export default function Camera() {
                     <button
                         onClick={() => setMode("camera")}
                         style={{
-                            marginTop: "8px",
+                            marginTop: "12px",
+                            width:"100%",
                             padding: "16px",
                             borderRadius: "16px",
                             fontSize: "1.1rem",
@@ -519,7 +519,7 @@ export default function Camera() {
                                 cursor: isRunning ? "not-allowed" : "pointer",
                             }}
                         >
-                            ⚙️ Settings
+                            Back
                         </button>
 
                         {/* SHUTTER BUTTON */}
