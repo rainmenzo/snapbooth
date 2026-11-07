@@ -290,7 +290,7 @@ export default function Camera() {
                         borderRadius: "24px",
                         padding: "32px",
                         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                        display: "flex",
+                        display: "hidden",
                         flexDirection: "column",
                         gap: "24px",
                     }}
