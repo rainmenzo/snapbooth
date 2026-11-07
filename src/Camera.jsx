@@ -290,7 +290,6 @@ export default function Camera() {
                         borderRadius: "24px",
                         padding: "32px",
                         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-                        display: "hidden",
                         flexDirection: "column",
                         gap: "24px",
                     }}
@@ -306,10 +305,9 @@ export default function Camera() {
                                 border: "none",
                                 fontWeight: "bold",
                                 cursor: "pointer",
-                                     display: "hidden",
                             }}
                         >
-                            Install SnapBooth App
+                            Install SnapBooth
                         </button>
                     )}
 
@@ -357,7 +355,6 @@ export default function Camera() {
                         </div>
                     </div>
 
-                    {/* FRAME SELECTION */}
                     {/* THEME / FRAME SELECTION */}
                     <div>
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
@@ -427,7 +424,7 @@ export default function Camera() {
                 </div>
             )}
 
-            {/* ======================= CAMERA VIEW SCREEN ======================= */}
+            {/* CAMERA VIEW SCREEN */}
             {mode === "camera" && (
                 <div
                     style={{
@@ -546,7 +543,7 @@ export default function Camera() {
                 </div>
             )}
 
-            {/* ======================= RESULT SCREEN ======================= */}
+            {/* RESULT SCREEN */}
             {mode === "result" && (
                 <div
                     style={{
