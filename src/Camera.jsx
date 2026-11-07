@@ -301,15 +301,14 @@ export default function Camera() {
                             style={{
                                 padding: "12px 20px",
                                 borderRadius: "12px",
-                                background: "linear-gradient(135deg, #10b981, #059669)",
+                                background: "#059669",
                                 color: "#fff",
                                 border: "none",
                                 fontWeight: "bold",
                                 cursor: "pointer",
-                                boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)",
                             }}
                         >
-                            📲 Install SnapBooth App
+                            Install SnapBooth App
                         </button>
                     )}
 
