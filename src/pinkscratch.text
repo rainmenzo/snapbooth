@@ -1,0 +1,699 @@
+import { useEffect, useRef, useState } from "react";
+import cameraImg from "./assets/camera.png";
+
+export default function Camera() {
+    const videoRef = useRef(null);
+
+    const [photos, setPhotos] = useState([]);
+    const [count, setCount] = useState(null);
+    const [strip, setStrip] = useState(null);
+    const [isRunning, setIsRunning] = useState(false);
+    const [isFlashActive, setIsFlashActive] = useState(false);
+
+    // Customization States
+    const [filter, setFilter] = useState("original");
+    const [bgColor, setBgColor] = useState("#ffb6c1"); // Default pink
+    const [pattern, setPattern] = useState("dots");
+    const [sticker, setSticker] = useState("heart");
+    const [customText, setCustomText] = useState("our little moments");
+
+    const [frame, setFrame] = useState("none");
+    const [mode, setMode] = useState("setup"); // 'setup' | 'camera' | 'result'
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+
+    // 🎭 FILTER PRESETS
+    const filterStyles = {
+        original: { label: "Original", css: "none", canvas: "none", img: "/filter/f1.png" },
+        warm: { label: "Warm", css: "contrast(115%) sepia(25%) saturate(130%)", canvas: "contrast(115%) sepia(25%) saturate(130%)", img: "/filter/f2.png" },
+        bw: { label: "B&W", css: "grayscale(100%) contrast(110%)", canvas: "grayscale(100%) contrast(110%)", img: "/filter/f3.png" },
+    };
+
+    // PWA Install Handler
+    useEffect(() => {
+        const handler = (e) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener("beforeinstallprompt", handler);
+        return () => window.removeEventListener("beforeinstallprompt", handler);
+    }, []);
+
+    const installApp = async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const choice = await deferredPrompt.userChoice;
+        if (choice.outcome === "accepted") {
+            console.log("App installed");
+        }
+        setDeferredPrompt(null);
+    };
+
+    // CAMERA STREAM SETUP
+    useEffect(() => {
+        let streamInstance = null;
+        if (mode === "camera") {
+            navigator.mediaDevices
+                .getUserMedia({
+                    video: {
+                        width: { ideal: 1080 },
+                        height: { ideal: 1080 },
+                        facingMode: "user",
+                    },
+                    audio: false,
+                })
+                .then((stream) => {
+                    streamInstance = stream;
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = stream;
+                    }
+                })
+                .catch((err) => console.error("Camera access error:", err));
+        }
+
+        return () => {
+            if (streamInstance) {
+                streamInstance.getTracks().forEach((track) => track.stop());
+            }
+        };
+    }, [mode]);
+
+    // TAKE PHOTO (Strict Square Aspect Ratio Crop)
+    const takePhoto = () => {
+        if (!videoRef.current) return null;
+        const video = videoRef.current;
+
+        const minDim = Math.min(video.videoWidth, video.videoHeight);
+        const startX = (video.videoWidth - minDim) / 2;
+        const startY = (video.videoHeight - minDim) / 2;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = 600;
+        canvas.height = 600;
+
+        const ctx = canvas.getContext("2d");
+        ctx.filter = filterStyles[filter].canvas;
+        ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, 600, 600);
+
+        setIsFlashActive(true);
+        setTimeout(() => setIsFlashActive(false), 250);
+
+        return canvas.toDataURL("image/png");
+    };
+
+    // COUNTDOWN TIMERS
+    const countdown = (seconds) => {
+        return new Promise((resolve) => {
+            let c = seconds;
+            setCount(c);
+
+            const interval = setInterval(() => {
+                c--;
+                if (c > 0) {
+                    setCount(c);
+                } else if (c === 0) {
+                    setCount("SMILE! 📸");
+                } else {
+                    clearInterval(interval);
+                    setCount(null);
+                    resolve();
+                }
+            }, 1000);
+        });
+    };
+
+    // CREATE CUSTOM PHOTO STRIP
+    const createStrip = async (images) => {
+        if (!images || images.length === 0) return null;
+
+        const photoDim = 600; 
+        const padding = 36; 
+        const gap = 24; 
+        const footerHeight = 140; 
+
+        const canvasWidth = photoDim + padding * 2;
+        const canvasHeight = padding * 2 + images.length * photoDim + (images.length - 1) * gap + footerHeight;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        const ctx = canvas.getContext("2d");
+
+        // 🎨 Background Color
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+        // 🎨 Background Pattern
+        if (pattern === "dots") {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.4)";
+            for (let px = 20; px < canvasWidth; px += 40) {
+                for (let py = 20; py < canvasHeight; py += 40) {
+                    ctx.beginPath();
+                    ctx.arc(px, py, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+        } else if (pattern === "stripes") {
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+            ctx.lineWidth = 12;
+            for (let p = -canvasHeight; p < canvasWidth + canvasHeight; p += 40) {
+                ctx.beginPath();
+                ctx.moveTo(p, 0);
+                ctx.lineTo(p + canvasHeight, canvasHeight);
+                ctx.stroke();
+            }
+        } else if (pattern === "grid") {
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.25)";
+            ctx.lineWidth = 2;
+            for (let gx = 0; gx < canvasWidth; gx += 40) {
+                ctx.beginPath(); ctx.moveTo(gx, 0); ctx.lineTo(gx, canvasHeight); ctx.stroke();
+            }
+            for (let gy = 0; gy < canvasHeight; gy += 40) {
+                ctx.beginPath(); ctx.moveTo(0, gy); ctx.lineTo(canvasWidth, gy); ctx.stroke();
+            }
+        }
+
+        // 🖼️ DRAW EACH PHOTO WITH WHITE FRAMES
+        for (let i = 0; i < images.length; i++) {
+            const img = new Image();
+            img.src = images[i];
+            await new Promise((resolve) => (img.onload = resolve));
+
+            const x = padding;
+            const y = padding + i * (photoDim + gap);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(x - 8, y - 8, photoDim + 16, photoDim + 16);
+
+            ctx.drawImage(img, x, y, photoDim, photoDim);
+        }
+
+        // STICKERS ON STRIP
+        ctx.font = "bold 36px sans-serif";
+        ctx.textAlign = "right";
+        ctx.fillText(sticker === "heart" ? "💖" : sticker === "star" ? "⭐" : sticker === "ribbon" ? "🎀" : "🌸", canvasWidth - padding - 10, padding + 40);
+
+        // CUSTOM TEXT FOOTER
+        ctx.fillStyle = "#ffffff";
+        ctx.textAlign = "center";
+        ctx.font = "italic bold 38px 'Segoe UI', cursive, sans-serif";
+        ctx.fillText(customText, canvasWidth / 2, canvasHeight - 65);
+
+        return canvas.toDataURL("image/png");
+    };
+
+    // START BOOTH SESSION
+    const startBooth = async () => {
+        setIsRunning(true);
+        setPhotos([]);
+        const shots = [];
+
+        for (let i = 0; i < 4; i++) {
+            await countdown(3);
+            const shot = takePhoto();
+            if (shot) shots.push(shot);
+        }
+
+        setPhotos(shots);
+        const finalStrip = await createStrip(shots);
+        setStrip(finalStrip);
+        setIsRunning(false);
+        setMode("result");
+    };
+
+    // DOWNLOAD STRIP
+    const downloadStrip = () => {
+        if (!strip) return alert("No photo strip available yet!");
+        const link = document.createElement("a");
+        link.href = strip;
+        link.download = `snapbooth-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    return (
+        <div
+            style={{
+                minHeight: "100vh",
+                background: "#fce7f0",
+                color: "#18181b",
+                fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "20px",
+                boxSizing: "border-box",
+            }}
+        >
+            {/* ======================= SETUP / CUSTOMIZE LAYOUT ======================= */}
+            {mode === "setup" && (
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        justifyContent: "center",
+                        alignItems: "flex-start",
+                        gap: "32px",
+                        width: "100%",
+                        maxWidth: "960px",
+                    }}
+                >
+                    {/* LEFT SIDE: PREVIEW PHOTO STRIP */}
+                    <div
+                        style={{
+                            background: bgColor,
+                            borderRadius: "24px",
+                            padding: "24px 16px",
+                            boxShadow: "0 20px 40px rgba(0,0,0,0.12)",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "240px",
+                            position: "relative",
+                        }}
+                    >
+                        <div style={{ position: "absolute", top: "20px", right: "20px", fontSize: "24px" }}>
+                            {sticker === "heart" ? "💖" : sticker === "star" ? "⭐" : sticker === "ribbon" ? "🎀" : "🌸"}
+                        </div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px", width: "100%", alignItems: "center" }}>
+                            {[1, 2, 3, 4].map((n) => (
+                                <div key={n} style={{ width: "200px", height: "200px", background: "#fff", borderRadius: "4px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(0,0,0,0.08)" }}>
+                                    <img src="/selfie.png" alt="preview" style={{ width: "188px", height: "188px", objectFit: "cover" }} />
+                                </div>
+                            ))}
+                        </div>
+                        <p style={{ marginTop: "20px", color: "#fff", fontFamily: "cursive", fontWeight: "bold", fontSize: "1.1rem", textAlign: "center" }}>
+                            {customText}
+                        </p>
+                    </div>
+
+                    {/* RIGHT SIDE: CUSTOMIZE PANEL */}
+                    <div
+                        style={{
+                            flex: 1,
+                            minWidth: "320px",
+                            maxWidth: "480px",
+                            background: "#ffffff",
+                            borderRadius: "24px",
+                            padding: "32px",
+                            boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "24px",
+                        }}
+                    >
+                        <h2 style={{ fontSize: "1.6rem", fontWeight: "900", color: "#18181b", margin: 0 }}>
+                            Customize
+                        </h2>
+
+                        {/* PHOTO FILTERS */}
+                        <div>
+                            <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#3f3f46" }}>
+                                Photo Filters
+                            </label>
+                            <div style={{ display: "flex", gap: "12px" }}>
+                                {Object.keys(filterStyles).map((f) => (
+                                    <div
+                                        key={f}
+                                        onClick={() => setFilter(f)}
+                                        style={{
+                                            cursor: "pointer",
+                                            textAlign: "center",
+                                        }}
+                                    >
+                                        <div style={{
+                                            width: "70px",
+                                            height: "70px",
+                                            borderRadius: "14px",
+                                            overflow: "hidden",
+                                            border: filter === f ? "3px solid #ff4d88" : "2px solid #e4e4e7",
+                                            padding: "2px",
+                                            background: "#fff"
+                                        }}>
+                                            <img src={filterStyles[f].img} alt={f} style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "10px" }} />
+                                        </div>
+                                        <span style={{ fontSize: "0.8rem", fontWeight: "600", color: filter === f ? "#ff4d88" : "#71717a", display: "block", marginTop: "4px" }}>
+                                            {filterStyles[f].label}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* BACKGROUND COLOR */}
+                        <div>
+                            <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#3f3f46" }}>
+                                Background Color
+                            </label>
+                            <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                                {[
+                                    { color: "#ffffff", border: "#e4e4e7" },
+                                    { color: "#18181b", border: "#18181b" },
+                                    { color: "#ffb6c1", border: "#ff4d88" },
+                                    { color: "#fef08a", border: "#eab308" },
+                                    { color: "#bbf7d0", border: "#22c55e" },
+                                    { color: "#e9d5ff", border: "#a855f7" }
+                                ].map((item, idx) => (
+                                    <div
+                                        key={idx}
+                                        onClick={() => setBgColor(item.color)}
+                                        style={{
+                                            width: "36px",
+                                            height: "36px",
+                                            borderRadius: "50%",
+                                            background: item.color,
+                                            border: bgColor === item.color ? `3px solid ${item.border}` : `2px solid ${item.border}`,
+                                            cursor: "pointer",
+                                            boxShadow: bgColor === item.color ? "0 4px 10px rgba(0,0,0,0.15)" : "none"
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* BACKGROUND PATTERN (With Sample Pattern Previews) */}
+                        <div>
+                            <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#3f3f46" }}>
+                                Background Pattern
+                            </label>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }}>
+                                {[
+                                    { id: "solid", label: "Solid", sampleBg: "#fff", samplePattern: "none" },
+                                    { id: "dots", label: "Dots", sampleBg: "#ffb6c1", samplePattern: "radial-gradient(circle, #fff 3px, transparent 3px) 0 0/16px 16px" },
+                                    { id: "stripes", label: "Stripes", sampleBg: "#ffb6c1", samplePattern: "repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(255,255,255,0.4) 6px, rgba(255,255,255,0.4) 12px)" },
+                                    { id: "grid", label: "Grid", sampleBg: "#ffb6c1", samplePattern: "linear-gradient(to right, rgba(255,255,255,0.4) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.4) 1px, transparent 1px) 0 0/16px 16px" },
+                                ].map((pat) => (
+                                    <button
+                                        key={pat.id}
+                                        onClick={() => setPattern(pat.id)}
+                                        style={{
+                                            padding: "8px 6px",
+                                            borderRadius: "12px",
+                                            border: pattern === pat.id ? "2px solid #ff4d88" : "1px solid #e4e4e7",
+                                            background: pattern === pat.id ? "#fff0f5" : "#fafafa",
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            flexDirection: "column",
+                                            alignItems: "center",
+                                            gap: "6px"
+                                        }}
+                                    >
+                                        {/* Sample pattern visual thumbnail */}
+                                        <div style={{
+                                            width: "36px",
+                                            height: "24px",
+                                            borderRadius: "6px",
+                                            backgroundColor: pat.sampleBg,
+                                            backgroundImage: pat.samplePattern !== "none" ? pat.samplePattern : "none",
+                                            border: "1px solid rgba(0,0,0,0.1)"
+                                        }} />
+                                        <span style={{ fontSize: "0.75rem", fontWeight: "600", color: pattern === pat.id ? "#ff4d88" : "#71717a" }}>
+                                            {pat.label}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* STICKERS */}
+                        <div>
+                            <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#3f3f46" }}>
+                                Stickers
+                            </label>
+                            <div style={{ display: "flex", gap: "10px" }}>
+                                {[
+                                    { id: "heart", icon: "💖" },
+                                    { id: "star", icon: "⭐" },
+                                    { id: "ribbon", icon: "🎀" },
+                                    { id: "flower", icon: "🌸" },
+                                ].map((stk) => (
+                                    <button
+                                        key={stk.id}
+                                        onClick={() => setSticker(stk.id)}
+                                        style={{
+                                            width: "48px",
+                                            height: "48px",
+                                            borderRadius: "12px",
+                                            border: sticker === stk.id ? "2px solid #ff4d88" : "1px solid #e4e4e7",
+                                            background: sticker === stk.id ? "#fff0f5" : "#fafafa",
+                                            fontSize: "1.2rem",
+                                            cursor: "pointer",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        {stk.icon}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* CUSTOM TEXT */}
+                        <div>
+                            <label style={{ display: "block", marginBottom: "10px", fontWeight: "700", fontSize: "0.9rem", color: "#3f3f46" }}>
+                                Custom Text
+                            </label>
+                            <input
+                                type="text"
+                                value={customText}
+                                onChange={(e) => setCustomText(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "12px 16px",
+                                    borderRadius: "12px",
+                                    border: "1px solid #e4e4e7",
+                                    background: "#fafafa",
+                                    fontSize: "0.95rem",
+                                    outline: "none",
+                                    boxSizing: "border-box",
+                                    color: "#18181b"
+                                }}
+                            />
+                        </div>
+
+                        {/* START PHOTO SHOT BUTTON (Placed right below Custom Text section) */}
+                        <button
+                            onClick={() => setMode("camera")}
+                            style={{
+                                marginTop: "8px",
+                                width: "100%",
+                                padding: "16px",
+                                borderRadius: "16px",
+                                fontSize: "1.1rem",
+                                fontWeight: "800",
+                                background: "#ff4d88",
+                                color: "#fff",
+                                border: "none",
+                                cursor: "pointer",
+                                boxShadow: "0 10px 25px rgba(255, 77, 136, 0.4)",
+                                transition: "transform 0.2s ease",
+                            }}
+                        >
+                            Start Photo Shoot 📸
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* ======================= CAMERA VIEW SCREEN ======================= */}
+            {mode === "camera" && (
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        width: "100%",
+                        maxWidth: "480px",
+                    }}
+                >
+                    <div
+                        style={{
+                            position: "relative",
+                            width: "100vw",
+                            maxWidth: "440px",
+                            aspectRatio: "1/1",
+                            borderRadius: "24px",
+                            overflow: "hidden",
+                            border: "4px solid #ffffff",
+                            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                            background: "#000",
+                        }}
+                    >
+                        <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            style={{
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                                transform: "scaleX(-1)",
+                                filter: filterStyles[filter].css,
+                            }}
+                        />
+
+                        {isFlashActive && (
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    background: "#fff",
+                                    zIndex: 20,
+                                    opacity: 0.9,
+                                }}
+                            />
+                        )}
+
+                        {count !== null && (
+                            <div
+                                style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    display: "flex",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    fontSize: typeof count === "number" ? "clamp(4rem, 15vw, 7rem)" : "2.5rem",
+                                    fontWeight: "900",
+                                    color: "#fff",
+                                    background: "rgba(0,0,0,0.4)",
+                                    backdropFilter: "blur(4px)",
+                                    zIndex: 10,
+                                    textAlign: "center",
+                                    padding: "0 10px"
+                                }}
+                            >
+                                {count}
+                            </div>
+                        )}
+                    </div>
+
+                    <div
+                        style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            width: "100%",
+                            maxWidth: "440px",
+                            marginTop: "24px",
+                            padding: "0 10px",
+                            boxSizing: "border-box"
+                        }}
+                    >
+                        <button
+                            onClick={() => setMode("setup")}
+                            disabled={isRunning}
+                            style={{
+                                padding: "12px 20px",
+                                borderRadius: "14px",
+                                background: "#ffffff",
+                                border: "1px solid #e4e4e7",
+                                color: "#18181b",
+                                fontWeight: "600",
+                                cursor: isRunning ? "not-allowed" : "pointer",
+                                boxShadow: "0 4px 10px rgba(0,0,0,0.05)"
+                            }}
+                        >
+                            ⚙️ Customize
+                        </button>
+
+                        <button
+                            onClick={startBooth}
+                            disabled={isRunning}
+                            style={{
+                                width: "72px",
+                                height: "72px",
+                                borderRadius: "50%",
+                                border: "4px solid #ffffff",
+                                background: isRunning ? "#52525b" : "radial-gradient(circle, #ff4d88 0%, #e11d48 100%)",
+                                boxShadow: isRunning ? "none" : "0 0 20px rgba(255, 77, 136, 0.6)",
+                                cursor: isRunning ? "not-allowed" : "pointer",
+                                transition: "transform 0.1s active",
+                            }}
+                        />
+
+                        <div style={{ width: "90px" }} />
+                    </div>
+                </div>
+            )}
+
+            {/* ======================= RESULT SCREEN ======================= */}
+            {mode === "result" && (
+                <div
+                    style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "20px",
+                        maxWidth: "420px",
+                        width: "100%",
+                    }}
+                >
+                    {strip && (
+                        <div
+                            style={{
+                                background: "#ffffff",
+                                padding: "16px",
+                                borderRadius: "20px",
+                                border: "1px solid #e4e4e7",
+                                boxShadow: "0 20px 40px rgba(0,0,0,0.1)",
+                                maxHeight: "55vh",
+                                overflowY: "auto",
+                            }}
+                        >
+                            <img
+                                src={strip}
+                                alt="Photo strip preview"
+                                style={{
+                                    width: "100%",
+                                    maxWidth: "200px",
+                                    height: "auto",
+                                    borderRadius: "8px",
+                                    display: "block",
+                                    margin: "0 auto"
+                                }}
+                            />
+                        </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: "12px", width: "100%" }}>
+                        <button
+                            onClick={() => setMode("camera")}
+                            style={{
+                                flex: 1,
+                                padding: "14px",
+                                borderRadius: "14px",
+                                background: "#ffffff",
+                                border: "1px solid #e4e4e7",
+                                color: "#18181b",
+                                fontWeight: "600",
+                                cursor: "pointer",
+                            }}
+                        >
+                            🔄 Retake
+                        </button>
+
+                        <button
+                            onClick={downloadStrip}
+                            style={{
+                                flex: 2,
+                                padding: "14px",
+                                borderRadius: "14px",
+                                background: "#ff4d88",
+                                border: "none",
+                                color: "#fff",
+                                fontWeight: "700",
+                                cursor: "pointer",
+                                boxShadow: "0 10px 20px -5px rgba(255, 77, 136, 0.4)",
+                            }}
+                        >
+                            💾 Save Photo Strip
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

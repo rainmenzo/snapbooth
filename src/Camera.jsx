@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import cameraImg from "./assets/camera.png";
 
 export default function Camera() {
     const videoRef = useRef(null);
@@ -15,12 +16,13 @@ export default function Camera() {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
 
     // 🎭 FILTER STYLES (CSS & Canvas compatible)
+    // Example mapping filters to images in public/filter/
     const filterStyles = {
-        none: { label: "Normal", css: "none", canvas: "none" },
-        bw: { label: "B&W Mono", css: "grayscale(100%) contrast(110%)", canvas: "grayscale(100%) contrast(110%)" },
-        sepia: { label: "Vintage Sepia", css: "sepia(90%) contrast(105%) brightness(95%)", canvas: "sepia(90%) contrast(105%) brightness(95%)" },
-        retro: { label: "Warm Retro", css: "contrast(120%) sepia(35%) saturate(140%)", canvas: "contrast(120%) sepia(35%) saturate(140%)" },
-        cool: { label: "Cool Blue", css: "hue-rotate(180%) contrast(105%) saturate(120%)", canvas: "hue-rotate(180%) contrast(105%) saturate(120%)" },
+        none: { label: "Normal", css: "none", canvas: "none", img: "./filter/f1.png" },
+        bw: { label: "B&W Mono", css: "grayscale(100%)", canvas: "grayscale(100%)", img: "./filter/f2.png" },
+        sepia: { label: "Vintage Sepia", css: "sepia(90%)", canvas: "sepia(90%)", img: "./filter/f3.png" },
+        retro: { label: "Warm Retro", css: "contrast(120%) sepia(35%)", canvas: "contrast(120%) sepia(35%)", img: "./filter/f4.png" },
+        cool: { label: "Cool Blue", css: "hue-rotate(180%)", canvas: "hue-rotate(180%)", img: "./filter/f5.png" },
     };
 
     // PWA Install Handler
@@ -120,14 +122,14 @@ export default function Camera() {
         });
     };
 
-    // CREATE VERTICAL STRIP WITH CUSTOM FRAME OVERLAY
+    // CREATE VERTICAL STRIP WITH SELECTED DEPARTMENT THEME
     const createStrip = async (images) => {
         if (!images || images.length === 0) return null;
 
-        const photoDim = 600; // Square width/height per shot
-        const padding = 30; // Border space around strip
-        const gap = 20; // Vertical gap between photos
-        const footerHeight = 120; // Space at bottom for photobooth branding/drawn frame text
+        const photoDim = 600; // Square size per shot
+        const padding = 40;   // Outer strip padding
+        const gap = 24;       // Vertical spacing between shots
+        const footerHeight = 140; // Bottom branding area
 
         const canvasWidth = photoDim + padding * 2;
         const canvasHeight = padding * 2 + images.length * photoDim + (images.length - 1) * gap + footerHeight;
@@ -137,57 +139,59 @@ export default function Camera() {
         canvas.height = canvasHeight;
         const ctx = canvas.getContext("2d");
 
-        // 🎨 STRIP BASE BACKGROUND
-        ctx.fillStyle = frame === "dark" ? "#121215" : frame === "korean" ? "#ffffff" : "#faf7f2";
+        // 🎨 BASE BACKGROUND COLOR (Customizable per department theme)
+        const themeBgColors = {
+            bsit: "#faf7f2", // Dark Tech
+            cte: "#faf7f2",  // Deep Royal Blue
+            cbam: "#faf7f2", // Emerald Green
+            bsoa: "#faf7f2", // Deep Magenta/Pink
+        };
+
+        ctx.fillStyle = themeBgColors[frame] || "#faf7f2";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-        // 🖼️ DRAW EACH PHOTO
+        // 🖼️ DRAW EACH PHOTO & OVERLAY THE MATCHING FRAME
         for (let i = 0; i < images.length; i++) {
             const img = new Image();
+            img.crossOrigin = "anonymous";
             img.src = images[i];
             await new Promise((resolve) => (img.onload = resolve));
 
             const x = padding;
             const y = padding + i * (photoDim + gap);
 
-            // Draw photo
+            // 1. Draw photo content
             ctx.drawImage(img, x, y, photoDim, photoDim);
 
-            // FRAME OVERLAY STYLES
-            if (frame === "korean") {
-                ctx.strokeStyle = "#ffffff";
-                ctx.lineWidth = 14;
-                ctx.strokeRect(x, y, photoDim, photoDim);
-            } else if (frame === "custom") {
-                // -------------------------------------------------------------
-                // ✏️ PLACEHOLDER FOR YOUR CUSTOM DRAWN FRAME OVERLAY:
-                // Size of canvas area per photo: 600px x 600px
-                // You can load your custom PNG frame overlay here:
-                //
-                // const overlayImg = new Image();
-                // overlayImg.src = "/frames/my-custom-drawn-frame.png";
-                // await new Promise(res => overlayImg.onload = res);
-                // ctx.drawImage(overlayImg, x, y, photoDim, photoDim);
-                // -------------------------------------------------------------
-                ctx.strokeStyle = "#ff007a";
-                ctx.lineWidth = 12;
-                ctx.strokeRect(x, y, photoDim, photoDim);
+            // 2. Determine frame path (e.g. /frames/bsit/1.png ... /frames/bsit/4.png)
+            const framePath = `/frames/${frame}/${i + 1}.png`;
 
-                ctx.fillStyle = "#ff007a";
-                ctx.font = "bold 24px sans-serif";
-                ctx.fillText("✨ SnapBooth Edition", x + 20, y + photoDim - 20);
+            try {
+                const frameImg = new Image();
+                frameImg.src = framePath;
+                await new Promise((res, rej) => {
+                    frameImg.onload = res;
+                    frameImg.onerror = rej;
+                });
+                ctx.drawImage(frameImg, x, y, photoDim, photoDim);
+            } catch (e) {
+                console.error(`Frame asset missing: ${framePath}`);
             }
         }
 
-        // FOOTER BRANDING / LOGO
-        ctx.fillStyle = frame === "dark" ? "#ffffff" : "#111111";
+        // 📝 FOOTER BRANDING
+        ctx.fillStyle = "#09090b";
         ctx.textAlign = "center";
-        ctx.font = "bold 32px sans-serif";
-        ctx.fillText("SNAPBOOTH", canvasWidth / 2, canvasHeight - 60);
+        ctx.font = "bold 32px monospace";
+        ctx.fillText(`${frame.toUpperCase()} | SNAPBOOTH`, canvasWidth / 2, canvasHeight - 75);
 
-        ctx.font = "500 18px sans-serif";
-        ctx.fillStyle = frame === "dark" ? "#888888" : "#666666";
-        ctx.fillText(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), canvasWidth / 2, canvasHeight - 30);
+        ctx.font = "500 18px monospace";
+        ctx.fillStyle = "rgba(31, 29, 29, 0.7)";
+        ctx.fillText(
+            new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+            canvasWidth / 2,
+            canvasHeight - 40
+        );
 
         return canvas.toDataURL("image/png");
     };
@@ -238,14 +242,30 @@ export default function Camera() {
             }}
         >
             {/* HEADER BRANDING */}
-            <header style={{ textAlign: "center", marginBottom: "20px", width: "100%", padding: "0 10px" }}>
+            <header style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                marginBottom: "20px",
+                width: "100%",
+                padding: "0 10px"
+            }}>
+                <img
+                    src={cameraImg}
+                    alt="SnapBooth Logo"
+                    style={{
+                        height: "180px",// Optional: makes it a nice circle logo
+                        marginBottom: "12px"
+                    }}
+                />
                 <h1
                     style={{
                         fontSize: "clamp(2rem, 5vw, 2.8rem)",
                         fontWeight: "900",
                         letterSpacing: "-1px",
                         margin: "0 0 8px 0",
-                        paddingBottom: "4px", // Prevents bottom clipping on descenders or gradients
+                        paddingBottom: "4px",
                         lineHeight: "1.2",
                         background: "linear-gradient(135deg, #a855f7, #6366f1)",
                         WebkitBackgroundClip: "text",
@@ -253,7 +273,7 @@ export default function Camera() {
                         display: "inline-block",
                     }}
                 >
-                    📸 SnapBooth
+                    SnapBooth
                 </h1>
                 <p style={{ color: "#a1a1aa", margin: 0, fontSize: "0.95rem" }}>Classic 4-Cut Studio Experience</p>
             </header>
@@ -304,7 +324,7 @@ export default function Camera() {
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     style={{
-                                        padding: "10px 8px",
+                                        padding: "10px 14px",
                                         borderRadius: "10px",
                                         border: filter === f ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.1)",
                                         background: filter === f ? "rgba(99, 102, 241, 0.2)" : "#18181b",
@@ -313,32 +333,49 @@ export default function Camera() {
                                         fontWeight: "600",
                                         cursor: "pointer",
                                         transition: "all 0.2s ease",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
                                     }}
                                 >
-                                    {filterStyles[f].label}
+                                    {/* Full Circle Image Preview Icon */}
+                                    <img
+                                        src={filterStyles[f].img}
+                                        alt={f}
+                                        style={{
+                                            width: "40px",
+                                            height: "40px",
+                                            borderRadius: "50%",
+                                            objectFit: "cover",
+                                            border: "none",
+                                            display: "block",
+                                        }}
+                                    />
+                                    <span>{filterStyles[f].label}</span>
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     {/* FRAME SELECTION */}
+                    {/* THEME / FRAME SELECTION */}
                     <div>
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
-                            2. Select Strip Frame Style
+                            2. Select Course/Department Theme
                         </label>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                             {[
-                                { id: "none", label: "Classic White" },
-                                { id: "korean", label: "K-Booth Border" },
-                                { id: "custom", label: "Drawn Frame" },
-                                { id: "dark", label: "Minimal Dark" },
+                                { id: "bsit", label: "BSIT Theme", preview: "/frames/bsit/1.png" },
+                                { id: "cte", label: "CTE Theme", preview: "/frames/cte/1.png" },
+                                { id: "cbam", label: "CBAM Theme", preview: "/frames/cbam/1.png" },
+                                { id: "bsoa", label: "BSOA Theme", preview: "/frames/bsoa/1.png" },
                             ].map((item) => (
                                 <button
                                     key={item.id}
                                     onClick={() => setFrame(item.id)}
                                     style={{
-                                        padding: "10px 8px",
-                                        borderRadius: "10px",
+                                        padding: "12px 14px",
+                                        borderRadius: "12px",
                                         border: frame === item.id ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.1)",
                                         background: frame === item.id ? "rgba(99, 102, 241, 0.2)" : "#18181b",
                                         color: frame === item.id ? "#a5b4fc" : "#a1a1aa",
@@ -346,9 +383,24 @@ export default function Camera() {
                                         fontWeight: "600",
                                         cursor: "pointer",
                                         transition: "all 0.2s ease",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        gap: "10px",
                                     }}
                                 >
-                                    {item.label}
+                                    <img
+                                        src={item.preview}
+                                        alt={item.label}
+                                        style={{
+                                            width: "24px",
+                                            height: "24px",
+                                            borderRadius: "50%",
+                                            objectFit: "cover",
+                                            border: "none",
+                                            display: "block",
+                                        }}
+                                    />
+                                    <span>{item.label}</span>
                                 </button>
                             ))}
                         </div>
@@ -362,16 +414,15 @@ export default function Camera() {
                             padding: "16px",
                             borderRadius: "16px",
                             fontSize: "1.1rem",
-                            fontWeight: "800",
-                            background: "linear-gradient(135deg, #6366f1, #a855f7)",
+                            fontWeight: "700",
+                            background: "#a855f7",
                             color: "#fff",
                             border: "none",
                             cursor: "pointer",
-                            boxShadow: "0 10px 25px -5px rgba(99, 102, 241, 0.5)",
                             transition: "transform 0.2s ease",
                         }}
                     >
-                        Enter Photo Booth 🚀
+                        Enter Photo Booth
                     </button>
                 </div>
             )}
@@ -543,7 +594,7 @@ export default function Camera() {
                                 cursor: "pointer",
                             }}
                         >
-                            🔄 Retake
+                            Retake
                         </button>
 
                         <button
@@ -552,15 +603,14 @@ export default function Camera() {
                                 flex: 2,
                                 padding: "14px",
                                 borderRadius: "14px",
-                                background: "linear-gradient(135deg, #10b981, #059669)",
+                                background: "#a855f7",
                                 border: "none",
                                 color: "#fff",
-                                fontWeight: "700",
+                                fontWeight: "600",
                                 cursor: "pointer",
-                                boxShadow: "0 10px 20px -5px rgba(16, 185, 129, 0.4)",
                             }}
                         >
-                            💾 Save Photo Strip
+                            <img src="" alt="" /> Save Photo Strip
                         </button>
                     </div>
                 </div>
