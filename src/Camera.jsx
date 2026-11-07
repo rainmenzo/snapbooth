@@ -306,6 +306,7 @@ export default function Camera() {
                                 border: "none",
                                 fontWeight: "bold",
                                 cursor: "pointer",
+                                     display: "hidden",
                             }}
                         >
                             Install SnapBooth App
