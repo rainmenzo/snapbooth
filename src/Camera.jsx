@@ -361,10 +361,10 @@ export default function Camera() {
                         </label>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                             {[
-                                { id: "bsit", label: "BSIT Theme", preview: "/frames/bsit/5.svg" },
-                                { id: "cte", label: "CTE Theme", preview: "/frames/cte/5.svg" },
-                                { id: "cbam", label: "CBAM Theme", preview: "/frames/cbam/5.svg" },
-                                { id: "bsoa", label: "BSOA Theme", preview: "/frames/bsoa/5.svg" },
+                                { id: "bsit", label: "Eka", preview: "/frames/bsit/5.png" },
+                                { id: "cte", label: "Onnie", preview: "/frames/cte/5.png" },
+                                { id: "cbam", label: "Rara", preview: "/frames/cbam/5.png" },
+                                { id: "bsoa", label: "PADC", preview: "/frames/bsoa/5.png" },
                             ].map((item) => (
                                 <button
                                     key={item.id}
