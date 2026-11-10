@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import cameraImg from "./assets/camera.png";
 
+
 export default function Camera() {
     const videoRef = useRef(null);
 
