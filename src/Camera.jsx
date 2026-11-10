@@ -183,7 +183,7 @@ export default function Camera() {
         ctx.fillStyle = "#09090b";
         ctx.textAlign = "center";
         ctx.font = "bold 32px monospace";
-        ctx.fillText(`${frame.toUpperCase()} | SNAPBOOTH`, canvasWidth / 2, canvasHeight - 75);
+        ctx.fillText(`SNAPBOOTH`, canvasWidth / 2, canvasHeight - 75);
 
         ctx.font = "500 20px monospace";
         ctx.fillStyle = "rgba(31, 29, 29, 0.7)";
@@ -282,7 +282,6 @@ export default function Camera() {
                 <div
                     style={{
                         width: "100%",
-                        maxWidth: "480px",
                         background: "rgba(24, 24, 27, 0.75)",
                         backdropFilter: "blur(16px)",
                         border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -388,8 +387,8 @@ export default function Camera() {
                                         src={item.preview}
                                         alt={item.label}
                                         style={{
-                                            width: "24px",
-                                            height: "24px",
+                                            width: "40px",
+                                            height: "40px",
                                             borderRadius: "50%",
                                             objectFit: "cover",
                                             border: "none",
