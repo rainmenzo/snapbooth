@@ -141,13 +141,13 @@ export default function Camera() {
 
         // 🎨 BASE BACKGROUND COLOR (Customizable per department theme)
         const themeBgColors = {
-            bsit: "#faf7f2", // Dark Tech
-            cte: "#faf7f2",  // Deep Royal Blue
-            cbam: "#faf7f2", // Emerald Green
-            bsoa: "#faf7f2", // Deep Magenta/Pink
+            bsit: "#fff", // Dark Tech
+            cte: "#fff",  // Deep Royal Blue
+            cbam: "#fff", // Emerald Green
+            bsoa: "#fff", // Deep Magenta/Pink
         };
 
-        ctx.fillStyle = themeBgColors[frame] || "#faf7f2";
+        ctx.fillStyle = themeBgColors[frame] || "#fff";
         ctx.fillRect(0, 0, canvasWidth, canvasHeight);
 
         // 🖼️ DRAW EACH PHOTO & OVERLAY THE MATCHING FRAME
@@ -185,7 +185,7 @@ export default function Camera() {
         ctx.font = "bold 32px monospace";
         ctx.fillText(`${frame.toUpperCase()} | SNAPBOOTH`, canvasWidth / 2, canvasHeight - 75);
 
-        ctx.font = "500 18px monospace";
+        ctx.font = "500 20px monospace";
         ctx.fillStyle = "rgba(31, 29, 29, 0.7)";
         ctx.fillText(
             new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
