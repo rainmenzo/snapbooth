@@ -27,12 +27,25 @@ export default function Camera() {
     };
 
     // PWA Install Handler
+    // useEffect(() => {
+    //     const handler = (e) => {
+    //         e.preventDefault();
+    //         setDeferredPrompt(e);
+    //     };
+    //     window.addEventListener("beforeinstallprompt", handler);
+    //     return () => window.removeEventListener("beforeinstallprompt", handler);
+    // }, []);
+    // PWA Install Handler with fallback logging for development
     useEffect(() => {
         const handler = (e) => {
+            // Prevent the mini-infobar from appearing on mobile
             e.preventDefault();
+            console.log("beforeinstallprompt event fired successfully!");
             setDeferredPrompt(e);
         };
+
         window.addEventListener("beforeinstallprompt", handler);
+
         return () => window.removeEventListener("beforeinstallprompt", handler);
     }, []);
 
@@ -231,7 +244,7 @@ export default function Camera() {
         <div
             style={{
                 minHeight: "100vh",
-                width:"100%",
+                width: "100%",
                 background: "radial-gradient(circle at 50% 20%, #1e1b4b 0%, #09090b 80%)",
                 color: "#fff",
                 fontFamily: "'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
@@ -355,7 +368,7 @@ export default function Camera() {
                     </div>
 
                     {/* THEME / FRAME SELECTION */}
-                    <div style={{marginTop:"12px"}}>
+                    <div style={{ marginTop: "12px" }}>
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
                             2. Select a Chibi Theme
                         </label>
@@ -407,7 +420,7 @@ export default function Camera() {
                         onClick={() => setMode("camera")}
                         style={{
                             marginTop: "12px",
-                            width:"100%",
+                            width: "100%",
                             padding: "16px",
                             borderRadius: "16px",
                             fontSize: "1.1rem",
