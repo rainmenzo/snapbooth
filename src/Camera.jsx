@@ -328,40 +328,59 @@ export default function Camera() {
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
                             1. Choose Filter Preset
                         </label>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "8px" }}>
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                                gap: "8px",
+                                width: "100%",
+                                boxSizing: "border-box"
+                            }}
+                        >
                             {Object.keys(filterStyles).map((f) => (
                                 <button
                                     key={f}
                                     onClick={() => setFilter(f)}
                                     style={{
-                                        padding: "10px 14px",
+                                        padding: "8px 10px",
                                         borderRadius: "10px",
                                         border: filter === f ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.1)",
                                         background: filter === f ? "rgba(99, 102, 241, 0.2)" : "#18181b",
                                         color: filter === f ? "#a5b4fc" : "#a1a1aa",
-                                        fontSize: "0.85rem",
+                                        fontSize: "0.8rem",
                                         fontWeight: "600",
                                         cursor: "pointer",
                                         transition: "all 0.2s ease",
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "10px",
+                                        gap: "8px",
+                                        minWidth: 0, // Prevents text flex overflow
+                                        overflow: "hidden"
                                     }}
                                 >
-                                    {/* Full Circle Image Preview Icon */}
                                     <img
                                         src={filterStyles[f].img}
                                         alt={f}
                                         style={{
-                                            width: "40px",
-                                            height: "40px",
+                                            width: "32px",
+                                            height: "32px",
                                             borderRadius: "50%",
                                             objectFit: "cover",
+                                            flexShrink: 0, // Keeps icon perfect circle
                                             border: "none",
                                             display: "block",
                                         }}
                                     />
-                                    <span>{filterStyles[f].label}</span>
+                                    <span
+                                        style={{
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            textAlign: "left"
+                                        }}
+                                    >
+                                        {filterStyles[f].label}
+                                    </span>
                                 </button>
                             ))}
                         </div>
@@ -372,7 +391,15 @@ export default function Camera() {
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
                             2. Select a Chibi Theme
                         </label>
-                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+                                gap: "8px",
+                                width: "100%",
+                                boxSizing: "border-box"
+                            }}
+                        >
                             {[
                                 { id: "bsit", label: "Eka", preview: "/frames/bsit/5.png" },
                                 { id: "cte", label: "Onnie", preview: "/frames/cte/5.png" },
@@ -383,7 +410,7 @@ export default function Camera() {
                                     key={item.id}
                                     onClick={() => setFrame(item.id)}
                                     style={{
-                                        padding: "12px 14px",
+                                        padding: "8px 10px",
                                         borderRadius: "12px",
                                         border: frame === item.id ? "2px solid #818cf8" : "1px solid rgba(255,255,255,0.1)",
                                         background: frame === item.id ? "rgba(99, 102, 241, 0.2)" : "#18181b",
@@ -394,22 +421,34 @@ export default function Camera() {
                                         transition: "all 0.2s ease",
                                         display: "flex",
                                         alignItems: "center",
-                                        gap: "10px",
+                                        gap: "8px",
+                                        minWidth: 0, // Prevents flex child overflow
+                                        overflow: "hidden"
                                     }}
                                 >
                                     <img
                                         src={item.preview}
                                         alt={item.label}
                                         style={{
-                                            width: "40px",
-                                            height: "40px",
+                                            width: "32px",
+                                            height: "32px",
                                             borderRadius: "50%",
                                             objectFit: "cover",
+                                            flexShrink: 0, // Prevents circle deformation
                                             border: "none",
                                             display: "block",
                                         }}
                                     />
-                                    <span>{item.label}</span>
+                                    <span
+                                        style={{
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            textAlign: "left"
+                                        }}
+                                    >
+                                        {item.label}
+                                    </span>
                                 </button>
                             ))}
                         </div>
