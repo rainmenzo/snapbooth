@@ -282,6 +282,7 @@ export default function Camera() {
                 <div
                     style={{
                         width: "100%",
+                        minWidth: "80%",
                         background: "rgba(24, 24, 27, 0.75)",
                         backdropFilter: "blur(16px)",
                         border: "1px solid rgba(255, 255, 255, 0.1)",
