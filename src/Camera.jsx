@@ -356,14 +356,14 @@ export default function Camera() {
                     {/* THEME / FRAME SELECTION */}
                     <div style={{marginTop:"12px"}}>
                         <label style={{ display: "block", marginBottom: "12px", fontWeight: "600", fontSize: "0.9rem", color: "#d4d4d8" }}>
-                            2. Select Course/Department Theme
+                            2. Select a Chibi Theme
                         </label>
                         <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "10px" }}>
                             {[
                                 { id: "bsit", label: "Eka", preview: "/frames/bsit/5.png" },
                                 { id: "cte", label: "Onnie", preview: "/frames/cte/5.png" },
-                                { id: "cbam", label: "Rara", preview: "/frames/cbam/5.png" },
-                                { id: "bsoa", label: "PADC", preview: "/frames/bsoa/5.png" },
+                                // { id: "cbam", label: "Rara", preview: "/frames/cbam/5.png" },
+                                // { id: "bsoa", label: "PADC", preview: "/frames/bsoa/5.png" },
                             ].map((item) => (
                                 <button
                                     key={item.id}
