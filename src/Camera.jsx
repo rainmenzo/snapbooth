@@ -197,7 +197,7 @@ export default function Camera() {
         ctx.fillStyle = "#09090b";
         ctx.textAlign = "center";
         ctx.font = "bold 32px monospace";
-        ctx.fillText(`SNAPBOOTH`, canvasWidth / 2, canvasHeight - 75);
+        ctx.fillText(`BSIT STUDENTS`, canvasWidth / 2, canvasHeight - 75);
 
         ctx.font = "500 20px monospace";
         ctx.fillStyle = "rgba(31, 29, 29, 0.7)";
